@@ -92,7 +92,7 @@ public class WearStatusMod
         if (isLocalPlayer(event.getEntity()))
         {
             PlayerEntity playerEntity = (PlayerEntity) event.getEntity();
-            PlayerStatusMessage playerStatusMessage = new PlayerStatusMessage(20.0f, 20.0f, 20.0f, 20); //TODO: Food level might be max
+            PlayerStatusMessage playerStatusMessage = new PlayerStatusMessage(20.0f, 20.0f, 20.0f, 20);
             WearConnector.getInstance().SendPlayerUpdate(playerStatusMessage);
         }
     }

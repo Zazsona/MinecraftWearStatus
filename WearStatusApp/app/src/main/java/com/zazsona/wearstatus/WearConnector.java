@@ -1,11 +1,18 @@
 package com.zazsona.wearstatus;
 
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
+import android.net.NetworkRequest;
+
 import com.google.gson.Gson;
 import com.zazsona.wearstatus.messages.PlayerStatusMessage;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.ArrayList;
@@ -34,28 +41,41 @@ public class WearConnector
         //Required private constructor
     }
 
-    public void startConnection()
+    public void startConnection(Context context)
     {
-        try
+        final ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkRequest request = new NetworkRequest.Builder()
+                .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
+                .build();
+        ConnectivityManager.NetworkCallback networkCallback = new ConnectivityManager.NetworkCallback()
         {
-            System.out.println("Starting connection...");
-            socket = new Socket("192.168.1.254", PORT);
-            System.out.println("Connected!");
-            outputStream = new ObjectOutputStream(socket.getOutputStream());
-            outputStream.flush();
-            inputStream = new ObjectInputStream(socket.getInputStream());
-            listenForMessages();
-        }
-        catch (SocketException e)
-        {
-            System.err.println("Wear Client socket closed - "+e.getMessage());
-        }
-        catch (IOException e)
-        {
-            System.err.println("Unable to run Wear Client - "+e.getMessage());
-            e.printStackTrace();
-        }
+            @Override
+            public void onAvailable(Network network)
+            {
+                try
+                {
+                    connectivityManager.bindProcessToNetwork(network);
+                    System.out.println("Starting connection...");
+                    socket = new Socket("192.168.1.254", PORT);
+                    System.out.println("Connected!");
+                    outputStream = new ObjectOutputStream(socket.getOutputStream());
+                    outputStream.flush();
+                    inputStream = new ObjectInputStream(socket.getInputStream());
+                    listenForMessages();
+                }
+                catch (SocketException e)
+                {
+                    System.err.println("Wear Client socket closed - "+e.getMessage());
+                }
+                catch (IOException e)
+                {
+                    System.err.println("Unable to run Wear Client - "+e.getMessage());
+                    e.printStackTrace();
+                }
 
+            }
+        };
+        connectivityManager.requestNetwork(request, networkCallback);
     }
 
     private void listenForMessages()

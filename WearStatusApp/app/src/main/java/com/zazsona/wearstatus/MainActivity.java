@@ -53,7 +53,7 @@ public class MainActivity extends WearableActivity
             @Override
             public void run()
             {
-                WearConnector.getInstance().startConnection();
+                WearConnector.getInstance().startConnection(activityContext.getApplicationContext());
             }
         }).start();
     }
