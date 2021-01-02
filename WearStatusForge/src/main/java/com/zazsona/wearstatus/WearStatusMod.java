@@ -76,7 +76,7 @@ public class WearStatusMod
         if (isLocalPlayer(event.getEntity()))
         {
             PlayerEntity playerEntity = (PlayerEntity) event.getEntity();
-            float currentHealth = Math.min(Math.max(0.0f, playerEntity.getHealth()-event.getAmount()), playerEntity.getMaxHealth()); //Clamp between 0 and MaxHealth
+            float currentHealth = Math.min(Math.max(0.0f, playerEntity.getHealth()+event.getAmount()), playerEntity.getMaxHealth()); //Clamp between 0 and MaxHealth
             PlayerStatusMessage playerStatusMessage = new PlayerStatusMessage(currentHealth, event.getAmount(), playerEntity.getMaxHealth(), playerEntity.getFoodStats().getFoodLevel());
             WearConnector.getInstance().sendMessage(playerStatusMessage);
         }
