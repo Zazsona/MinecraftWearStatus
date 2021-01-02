@@ -7,17 +7,16 @@ import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
 
 import com.google.gson.Gson;
+import com.zazsona.wearstatus.listeners.PlayerStatusUpdateListener;
+import com.zazsona.wearstatus.messages.Message;
 import com.zazsona.wearstatus.messages.PlayerStatusMessage;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.ArrayList;
-import java.util.logging.LogManager;
-import java.util.logging.Logger;
 
 public class WearConnector
 {
@@ -27,7 +26,8 @@ public class WearConnector
     private Socket socket;
     private ObjectInputStream inputStream;
     private ObjectOutputStream outputStream;
-    private ArrayList<PlayerStatusUpdateHandler> handlers = new ArrayList<>();
+    private boolean manuallyStopped;
+    private ArrayList<PlayerStatusUpdateListener> playerStatusListeners = new ArrayList<>();
 
     public static WearConnector getInstance()
     {
@@ -52,48 +52,65 @@ public class WearConnector
             @Override
             public void onAvailable(Network network)
             {
-                try
-                {
-                    connectivityManager.bindProcessToNetwork(network);
-                    System.out.println("Starting connection...");
-                    socket = new Socket("192.168.1.254", PORT);
-                    System.out.println("Connected!");
-                    outputStream = new ObjectOutputStream(socket.getOutputStream());
-                    outputStream.flush();
-                    inputStream = new ObjectInputStream(socket.getInputStream());
-                    listenForMessages();
-                }
-                catch (SocketException e)
-                {
-                    System.err.println("Wear Client socket closed - "+e.getMessage());
-                }
-                catch (IOException e)
-                {
-                    System.err.println("Unable to run Wear Client - "+e.getMessage());
-                    e.printStackTrace();
-                }
-
+                connectivityManager.bindProcessToNetwork(network);
+                initialiseSocket();
             }
         };
         connectivityManager.requestNetwork(request, networkCallback);
+    }
+
+    private void initialiseSocket()
+    {
+        try
+        {
+            stopConnection();
+            manuallyStopped = false;
+            System.out.println("Starting connection...");
+            socket = new Socket("192.168.1.254", PORT);
+            System.out.println("Connected!");
+            outputStream = new ObjectOutputStream(socket.getOutputStream());
+            outputStream.flush();
+            inputStream = new ObjectInputStream(socket.getInputStream());
+            listenForMessages();
+        }
+        catch (SocketException e)
+        {
+            System.err.println("Wear Client socket closed - "+e.getMessage());
+            e.printStackTrace();
+        }
+        catch (IOException e)
+        {
+            System.err.println("Unable to run Wear Client - "+e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     private void listenForMessages()
     {
         try
         {
-            while (socket.isConnected() && socket != null)
+            while (!socket.isClosed() && socket != null)
             {
                 String json = (String) inputStream.readObject();
-                PlayerStatusMessage playerStatus = new Gson().fromJson(json, PlayerStatusMessage.class);
-                RunHandlers(playerStatus);
-                System.out.println("Got update!");
+                Gson gson = new Gson();
+                Message message = gson.fromJson(json, Message.class);
+                if (message.getMessageType().equals(PlayerStatusMessage.MESSAGE_TYPE))
+                {
+                    PlayerStatusMessage playerStatus = new Gson().fromJson(json, PlayerStatusMessage.class);
+                    RunListeners(playerStatus);
+                }
+                else if (message.getMessageType().equals("PING"))
+                {
+                    //Do nothing.
+                }
             }
         }
         catch (IOException | ClassNotFoundException e)
         {
             System.out.println("Lost connection to the server - "+e.getMessage());
             e.printStackTrace();
+            if (!manuallyStopped)
+                initialiseSocket();
         }
     }
 
@@ -101,11 +118,15 @@ public class WearConnector
     {
         try
         {
-            socket.close();
-            outputStream.flush();
-            outputStream.close();
-            inputStream.close();
-            System.out.println("Wear Client was stopped.");
+            if (socket != null)
+            {
+                socket.close();
+                outputStream.flush();
+                outputStream.close();
+                inputStream.close();
+                manuallyStopped = true;
+                System.out.println("Wear Client was stopped.");
+            }
         }
         catch (IOException e)
         {
@@ -114,14 +135,14 @@ public class WearConnector
         }
     }
 
-    public void AddHandler(PlayerStatusUpdateHandler handler)
+    public void AddListener(PlayerStatusUpdateListener handler)
     {
-        handlers.add(handler);
+        playerStatusListeners.add(handler);
     }
 
-    public void RunHandlers(PlayerStatusMessage playerStatus)
+    private void RunListeners(PlayerStatusMessage playerStatus)
     {
-        for (PlayerStatusUpdateHandler handler : handlers)
+        for (PlayerStatusUpdateListener handler : playerStatusListeners)
             handler.onPlayerStatusUpdated(playerStatus);
     }
 }

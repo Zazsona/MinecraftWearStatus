@@ -70,7 +70,7 @@ public class WearStatusMod
         {
             PlayerEntity playerEntity = (PlayerEntity) event.getEntity();
             PlayerStatusMessage playerStatusMessage = new PlayerStatusMessage(playerEntity.getHealth()-event.getAmount(), -event.getAmount(), playerEntity.getMaxHealth(), playerEntity.getFoodStats().getFoodLevel());
-            WearConnector.getInstance().SendPlayerUpdate(playerStatusMessage);
+            WearConnector.getInstance().sendMessage(playerStatusMessage);
         }
 
     }
@@ -82,7 +82,7 @@ public class WearStatusMod
         {
             PlayerEntity playerEntity = (PlayerEntity) event.getEntity();
             PlayerStatusMessage playerStatusMessage = new PlayerStatusMessage(playerEntity.getHealth()+event.getAmount(), event.getAmount(), playerEntity.getMaxHealth(), playerEntity.getFoodStats().getFoodLevel());
-            WearConnector.getInstance().SendPlayerUpdate(playerStatusMessage);
+            WearConnector.getInstance().sendMessage(playerStatusMessage);
         }
     }
 
@@ -91,9 +91,8 @@ public class WearStatusMod
     {
         if (isLocalPlayer(event.getEntity()))
         {
-            PlayerEntity playerEntity = (PlayerEntity) event.getEntity();
             PlayerStatusMessage playerStatusMessage = new PlayerStatusMessage(20.0f, 20.0f, 20.0f, 20);
-            WearConnector.getInstance().SendPlayerUpdate(playerStatusMessage);
+            WearConnector.getInstance().sendMessage(playerStatusMessage);
         }
     }
 
@@ -104,7 +103,7 @@ public class WearStatusMod
         {
             PlayerEntity playerEntity = (PlayerEntity) event.getEntity();
             PlayerStatusMessage playerStatusMessage = new PlayerStatusMessage(playerEntity.getHealth(), 0.0f, playerEntity.getMaxHealth(), playerEntity.getFoodStats().getFoodLevel());
-            WearConnector.getInstance().SendPlayerUpdate(playerStatusMessage);
+            WearConnector.getInstance().sendMessage(playerStatusMessage);
         }
     }
 }

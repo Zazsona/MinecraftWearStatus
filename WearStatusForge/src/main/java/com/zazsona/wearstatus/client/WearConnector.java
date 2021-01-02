@@ -1,6 +1,7 @@
 package com.zazsona.wearstatus.client;
 
 import com.google.gson.Gson;
+import com.zazsona.wearstatus.messages.Message;
 import com.zazsona.wearstatus.messages.PlayerStatusMessage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
@@ -24,6 +25,9 @@ public class WearConnector
     private Socket clientSocket;
     private ObjectInputStream inputStream;
     private ObjectOutputStream outputStream;
+    private Thread pingThread;
+    private boolean manuallyStopped;
+    private Object lock = new Object();
 
     public static WearConnector getInstance()
     {
@@ -34,13 +38,16 @@ public class WearConnector
 
     private WearConnector()
     {
-        //Required private constructor
+        pingThread = new Thread(() -> runPingLoop());
+        pingThread.start();
     }
 
     public void startServer()
     {
         try
         {
+            stopServer();
+            manuallyStopped = false;
             LOGGER.info("Starting wear server...");
             if (serverSocket == null)
                 serverSocket = new ServerSocket(PORT);
@@ -51,11 +58,10 @@ public class WearConnector
             outputStream = new ObjectOutputStream(clientSocket.getOutputStream());
             outputStream.flush();
             inputStream = new ObjectInputStream(clientSocket.getInputStream());
-            System.out.println("Output Stream: "+outputStream);
 
             ClientPlayerEntity clientPlayerEntity = Minecraft.getInstance().player;
             if (clientPlayerEntity != null)
-                SendPlayerUpdate(new PlayerStatusMessage(clientPlayerEntity.getHealth(), 0.0f, clientPlayerEntity.getMaxHealth(), clientPlayerEntity.getFoodStats().getFoodLevel()));
+                sendMessage(new PlayerStatusMessage(clientPlayerEntity.getHealth(), 0.0f, clientPlayerEntity.getMaxHealth(), clientPlayerEntity.getFoodStats().getFoodLevel()));
         }
         catch (SocketException e)
         {
@@ -66,18 +72,22 @@ public class WearConnector
             LOGGER.error("Unable to run Wear Server - "+e.getMessage());
             e.printStackTrace();
         }
-
     }
 
     public void stopServer()
     {
         try
         {
-            clientSocket.close();
-            inputStream.close();
-            outputStream.flush();
-            outputStream.close();
-            serverSocket.close();
+            if (clientSocket != null)
+            {
+                clientSocket.close();
+                inputStream.close();
+                outputStream.flush();
+                outputStream.close();
+            }
+            if (serverSocket != null)
+                serverSocket.close();
+            manuallyStopped = true;
             LOGGER.info("Wear Server was stopped.");
         }
         catch (IOException e)
@@ -87,27 +97,45 @@ public class WearConnector
         }
     }
 
-    public boolean SendPlayerUpdate(PlayerStatusMessage playerStatusMessage)
+    public void sendMessage(Message message)
     {
         try
         {
-            if (clientSocket == null || !clientSocket.isConnected())
-                return false;
-
-            Gson gson = new Gson();
-            String playerStatusJson = gson.toJson(playerStatusMessage);
-            outputStream.writeObject(playerStatusJson);
-            outputStream.flush();
-            return true;
+            if (clientSocket != null && outputStream != null && !clientSocket.isClosed())
+            {
+                synchronized (lock)
+                {
+                    Gson gson = new Gson();
+                    String messageJson = gson.toJson(message);
+                    outputStream.writeObject(messageJson);
+                    outputStream.flush();
+                }
+            }
         }
         catch (IOException e)
         {
-            LOGGER.error("Unable to send player status - "+e.getMessage());
-            e.printStackTrace();
+            if (!manuallyStopped)
+            {
+                LOGGER.warn("Unable to send message - "+e.getMessage()+"\nResetting connection.");
+                stopServer();
+                startServer();
+            }
         }
-        finally
+    }
+
+    private void runPingLoop()
+    {
+        try
         {
-            return false;
+            while (true)
+            {
+                Thread.sleep(1500);
+                sendMessage(new Message("PING"));
+            }
+        }
+        catch (InterruptedException e)
+        {
+            LOGGER.info("Ping loop stopped.");
         }
     }
 }
