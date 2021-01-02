@@ -8,6 +8,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.living.*;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
@@ -34,14 +35,7 @@ public class WearStatusMod
     {
         // do something that can only be done on the client
         LOGGER.info("Got game settings {}", event.getMinecraftSupplier().get().gameSettings);
-        new Thread(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                WearConnector.getInstance().startServer();
-            }
-        }).start();
+        new Thread(() -> WearConnector.getInstance().startServer()).start();
         MinecraftForge.EVENT_BUS.addListener(this::registerDamage);
         MinecraftForge.EVENT_BUS.addListener(this::registerHeal);
         MinecraftForge.EVENT_BUS.addListener(this::registerSpawn);
@@ -69,7 +63,8 @@ public class WearStatusMod
         if (isLocalPlayer(event.getEntity()))
         {
             PlayerEntity playerEntity = (PlayerEntity) event.getEntity();
-            PlayerStatusMessage playerStatusMessage = new PlayerStatusMessage(playerEntity.getHealth()-event.getAmount(), -event.getAmount(), playerEntity.getMaxHealth(), playerEntity.getFoodStats().getFoodLevel());
+            float currentHealth = Math.min(Math.max(0.0f, playerEntity.getHealth()-event.getAmount()), playerEntity.getMaxHealth()); //Clamp between 0 and MaxHealth
+            PlayerStatusMessage playerStatusMessage = new PlayerStatusMessage(currentHealth, -event.getAmount(), playerEntity.getMaxHealth(), playerEntity.getFoodStats().getFoodLevel());
             WearConnector.getInstance().sendMessage(playerStatusMessage);
         }
 
@@ -81,13 +76,14 @@ public class WearStatusMod
         if (isLocalPlayer(event.getEntity()))
         {
             PlayerEntity playerEntity = (PlayerEntity) event.getEntity();
-            PlayerStatusMessage playerStatusMessage = new PlayerStatusMessage(playerEntity.getHealth()+event.getAmount(), event.getAmount(), playerEntity.getMaxHealth(), playerEntity.getFoodStats().getFoodLevel());
+            float currentHealth = Math.min(Math.max(0.0f, playerEntity.getHealth()-event.getAmount()), playerEntity.getMaxHealth()); //Clamp between 0 and MaxHealth
+            PlayerStatusMessage playerStatusMessage = new PlayerStatusMessage(currentHealth, event.getAmount(), playerEntity.getMaxHealth(), playerEntity.getFoodStats().getFoodLevel());
             WearConnector.getInstance().sendMessage(playerStatusMessage);
         }
     }
 
     @SubscribeEvent
-    public void registerSpawn(final LivingSpawnEvent event)
+    public void registerSpawn(final PlayerEvent.PlayerRespawnEvent event)
     {
         if (isLocalPlayer(event.getEntity()))
         {

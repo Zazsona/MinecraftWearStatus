@@ -54,19 +54,4 @@ public class PlayerStatusMessage extends Message
     {
         return maxHealth;
     }
-
-    /**
-     * Gets healthChange, clamping it off if it extends beyond 0 or maximum health
-     * @return clamped healthChange
-     */
-    public float getClampedHealthChange()
-    {
-        float resultingHealth = health+healthChange;
-        if (resultingHealth < 0.0f)
-            return healthChange-resultingHealth;
-        else if (resultingHealth > maxHealth)
-            return healthChange-(resultingHealth-maxHealth);
-        else
-            return healthChange;
-    }
 }

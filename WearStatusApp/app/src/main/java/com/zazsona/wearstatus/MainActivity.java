@@ -36,10 +36,11 @@ public class MainActivity extends WearableActivity
                     public void run()
                     {
                         mTextView.setText(String.valueOf(Math.ceil(newStatus.getHealth())));
-                        if (newStatus.getClampedHealthChange() < 0)
+                        if (newStatus.getHealthChange() < 0)
                         {
                             Vibrator v = (Vibrator) getSystemService(activityContext.getApplicationContext().VIBRATOR_SERVICE);
-                            v.vibrate(VibrationEffect.createOneShot(Math.round(200*(Math.abs(newStatus.getClampedHealthChange()/2))), VibrationEffect.DEFAULT_AMPLITUDE));
+                            int vibrateTime = Math.min(Math.round(100*(Math.abs(newStatus.getHealthChange()/2))), 1000);
+                            v.vibrate(VibrationEffect.createOneShot(vibrateTime, VibrationEffect.DEFAULT_AMPLITUDE));
                         }
 
                     }
@@ -49,9 +50,9 @@ public class MainActivity extends WearableActivity
     }
 
     @Override
-    protected void onResume()
+    protected void onStart()
     {
-        super.onResume();
+        super.onStart();
         final Context context = this.getApplicationContext();
         new Thread(new Runnable()
         {
@@ -64,9 +65,9 @@ public class MainActivity extends WearableActivity
     }
 
     @Override
-    protected void onPause()
+    protected void onStop()
     {
-        super.onPause();
+        super.onStop();
         new Thread(new Runnable()
         {
             @Override
