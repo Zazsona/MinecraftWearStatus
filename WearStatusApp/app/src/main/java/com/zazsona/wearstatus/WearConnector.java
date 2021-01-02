@@ -118,15 +118,13 @@ public class WearConnector
     {
         try
         {
-            if (socket != null)
+            if (socket != null && !socket.isClosed())
             {
-                socket.close();
                 outputStream.flush();
-                outputStream.close();
-                inputStream.close();
-                manuallyStopped = true;
-                System.out.println("Wear Client was stopped.");
+                socket.close();
             }
+            manuallyStopped = true;
+            System.out.println("Wear Client was stopped.");
         }
         catch (IOException e)
         {

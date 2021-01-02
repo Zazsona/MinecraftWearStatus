@@ -25,8 +25,6 @@ public class WearConnector
     private Socket clientSocket;
     private ObjectInputStream inputStream;
     private ObjectOutputStream outputStream;
-    private Thread pingThread;
-    private boolean manuallyStopped;
     private Object lock = new Object();
 
     public static WearConnector getInstance()
@@ -38,34 +36,45 @@ public class WearConnector
 
     private WearConnector()
     {
-        pingThread = new Thread(() -> runPingLoop());
-        pingThread.start();
+        try
+        {
+            LOGGER.info("Creating wear server...");
+            serverSocket = new ServerSocket(PORT);
+            serverSocket.setSoTimeout(0);
+            LOGGER.info("Wear server created: "+serverSocket.getInetAddress()+":"+serverSocket.getLocalPort());
+        }
+        catch (IOException e)
+        {
+            LOGGER.error("Unable to create Wear Server - "+e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     public void startServer()
     {
         try
         {
-            stopServer();
-            manuallyStopped = false;
-            LOGGER.info("Starting wear server...");
-            if (serverSocket == null)
-                serverSocket = new ServerSocket(PORT);
-            serverSocket.setSoTimeout(0);
-            LOGGER.info("Wear server created: "+serverSocket.getInetAddress()+":"+serverSocket.getLocalPort());
-            clientSocket = serverSocket.accept();
-            LOGGER.info("Wear connected! - "+clientSocket.getInetAddress().getHostName());
-            outputStream = new ObjectOutputStream(clientSocket.getOutputStream());
-            outputStream.flush();
-            inputStream = new ObjectInputStream(clientSocket.getInputStream());
+            while (true)
+            {
+                LOGGER.info("Waiting for Wear client...");
+                clientSocket = serverSocket.accept();
+                LOGGER.info("Wear connected! - "+clientSocket.getInetAddress().getHostName());
+                outputStream = new ObjectOutputStream(clientSocket.getOutputStream());
+                outputStream.flush();
+                inputStream = new ObjectInputStream(clientSocket.getInputStream());
 
-            ClientPlayerEntity clientPlayerEntity = Minecraft.getInstance().player;
-            if (clientPlayerEntity != null)
-                sendMessage(new PlayerStatusMessage(clientPlayerEntity.getHealth(), 0.0f, clientPlayerEntity.getMaxHealth(), clientPlayerEntity.getFoodStats().getFoodLevel()));
+                ClientPlayerEntity clientPlayerEntity = Minecraft.getInstance().player;
+                if (clientPlayerEntity != null)
+                    sendMessage(new PlayerStatusMessage(clientPlayerEntity.getHealth(), 0.0f, clientPlayerEntity.getMaxHealth(), clientPlayerEntity.getFoodStats().getFoodLevel()));
+
+                runPingLoop(); //This will hold the thread until a ping fails.
+                stopConnection();
+            }
         }
         catch (SocketException e)
         {
-            LOGGER.info("Wear Server socket closed - "+e.getMessage());
+            LOGGER.info("Wear Client socket error - "+e.getMessage());
+            e.printStackTrace();
         }
         catch (IOException e)
         {
@@ -74,30 +83,26 @@ public class WearConnector
         }
     }
 
-    public void stopServer()
+    public void stopConnection()
     {
         try
         {
             if (clientSocket != null)
             {
-                clientSocket.close();
-                inputStream.close();
-                outputStream.flush();
-                outputStream.close();
+                if (!clientSocket.isClosed())
+                    clientSocket.close();
+                clientSocket = null;
             }
-            if (serverSocket != null)
-                serverSocket.close();
-            manuallyStopped = true;
-            LOGGER.info("Wear Server was stopped.");
+            LOGGER.info("Wear Connection was stopped.");
         }
         catch (IOException e)
         {
-            LOGGER.error("Could not gracefully stop Wear Server - "+e.getMessage());
+            LOGGER.error("Could not gracefully stop Wear connection - "+e.getMessage());
             e.printStackTrace();
         }
     }
 
-    public void sendMessage(Message message)
+    public boolean sendMessage(Message message)
     {
         try
         {
@@ -109,17 +114,15 @@ public class WearConnector
                     String messageJson = gson.toJson(message);
                     outputStream.writeObject(messageJson);
                     outputStream.flush();
+                    return true;
                 }
             }
+            return false;
         }
         catch (IOException e)
         {
-            if (!manuallyStopped)
-            {
-                LOGGER.warn("Unable to send message - "+e.getMessage()+"\nResetting connection.");
-                stopServer();
-                startServer();
-            }
+            LOGGER.warn("Unable to send message - "+e.getMessage());
+            return false;
         }
     }
 
@@ -127,15 +130,16 @@ public class WearConnector
     {
         try
         {
-            while (true)
+            boolean success = true;
+            while (success)
             {
                 Thread.sleep(1500);
-                sendMessage(new Message("PING"));
+                success = sendMessage(new Message("PING"));
             }
         }
         catch (InterruptedException e)
         {
-            LOGGER.info("Ping loop stopped.");
+            LOGGER.info("Ping loop interrupted.");
         }
     }
 }
