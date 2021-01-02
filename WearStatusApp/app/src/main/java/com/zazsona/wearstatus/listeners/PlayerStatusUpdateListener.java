@@ -1,8 +1,8 @@
-package com.zazsona.wearstatus;
+package com.zazsona.wearstatus.listeners;
 
 import com.zazsona.wearstatus.messages.PlayerStatusMessage;
 
-public interface PlayerStatusUpdateHandler
+public interface PlayerStatusUpdateListener
 {
     void onPlayerStatusUpdated(PlayerStatusMessage newStatus);
 }

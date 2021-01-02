@@ -2,6 +2,7 @@ package com.zazsona.wearstatus.messages;
 
 public class PlayerStatusMessage extends Message
 {
+    public static final String MESSAGE_TYPE = "PLAYER_STATUS";
     private float health;
     private float healthChange;
     private float maxHealth;
@@ -9,7 +10,7 @@ public class PlayerStatusMessage extends Message
 
     public PlayerStatusMessage(float health, float healthChange, float maxHealth, int hunger)
     {
-        super("PLAYER_STATUS");
+        super(MESSAGE_TYPE);
         this.health = health;
         this.healthChange = healthChange;
         this.maxHealth = maxHealth;
