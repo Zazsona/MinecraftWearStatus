@@ -29,11 +29,12 @@
                 android:layout_width="0dp"
                 android:layout_height="35dp"
                 android:layout_marginStart="8dp"
-                android:layout_marginTop="72dp"
                 android:layout_marginEnd="8dp"
+                android:layout_marginBottom="12dp"
                 android:orientation="horizontal"
+                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.495"
+                app:layout_constraintHorizontal_bias="0.0"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent">
 
@@ -138,5 +139,121 @@
                     android:src="@mipmap/full" />
 
         </LinearLayout>
+
+        <LinearLayout
+                android:id="@+id/foodLayout"
+                android:layout_width="0dp"
+                android:layout_height="25dp"
+                android:layout_marginStart="32dp"
+                android:layout_marginEnd="32dp"
+                android:orientation="horizontal"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.0"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/heartsLayout">
+
+            <ImageView
+                    android:id="@+id/food10"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:adjustViewBounds="false"
+                    android:cropToPadding="false"
+                    android:scaleType="fitCenter"
+                    android:src="@mipmap/food_full" />
+
+            <ImageView
+                    android:id="@+id/food9"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:adjustViewBounds="false"
+                    android:cropToPadding="false"
+                    android:scaleType="fitCenter"
+                    android:src="@mipmap/food_full" />
+
+            <ImageView
+                    android:id="@+id/food8"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:adjustViewBounds="false"
+                    android:cropToPadding="false"
+                    android:scaleType="fitCenter"
+                    android:src="@mipmap/food_full" />
+
+            <ImageView
+                    android:id="@+id/food7"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:adjustViewBounds="false"
+                    android:cropToPadding="false"
+                    android:scaleType="fitCenter"
+                    android:src="@mipmap/food_full" />
+
+            <ImageView
+                    android:id="@+id/food6"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:adjustViewBounds="false"
+                    android:cropToPadding="false"
+                    android:scaleType="fitCenter"
+                    android:src="@mipmap/food_full" />
+
+            <ImageView
+                    android:id="@+id/food5"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:adjustViewBounds="false"
+                    android:cropToPadding="false"
+                    android:scaleType="fitCenter"
+                    android:src="@mipmap/food_full" />
+
+            <ImageView
+                    android:id="@+id/food4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:adjustViewBounds="false"
+                    android:cropToPadding="false"
+                    android:scaleType="fitCenter"
+                    android:src="@mipmap/food_full" />
+
+            <ImageView
+                    android:id="@+id/food3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:adjustViewBounds="false"
+                    android:cropToPadding="false"
+                    android:scaleType="fitCenter"
+                    android:src="@mipmap/food_full" />
+
+            <ImageView
+                    android:id="@+id/food2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:adjustViewBounds="false"
+                    android:cropToPadding="false"
+                    android:scaleType="fitCenter"
+                    android:src="@mipmap/food_full" />
+
+            <ImageView
+                    android:id="@+id/food1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:adjustViewBounds="false"
+                    android:cropToPadding="false"
+                    android:scaleType="fitCenter"
+                    android:src="@mipmap/food_full" />
+
+        </LinearLayout>
+
     </androidx.constraintlayout.widget.ConstraintLayout>
+
 </androidx.wear.widget.BoxInsetLayout>

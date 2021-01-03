@@ -16,6 +16,7 @@ public class MainActivity extends WearableActivity
 
     private TextView mTextView;
     private ImageView mHearts[];
+    private ImageView mFood[];
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -37,6 +38,18 @@ public class MainActivity extends WearableActivity
         mHearts[7] = findViewById(R.id.heart8);
         mHearts[8] = findViewById(R.id.heart9);
         mHearts[9] = findViewById(R.id.heart10);
+
+        mFood = new ImageView[10];
+        mFood[0] = findViewById(R.id.food1);
+        mFood[1] = findViewById(R.id.food2);
+        mFood[2] = findViewById(R.id.food3);
+        mFood[3] = findViewById(R.id.food4);
+        mFood[4] = findViewById(R.id.food5);
+        mFood[5] = findViewById(R.id.food6);
+        mFood[6] = findViewById(R.id.food7);
+        mFood[7] = findViewById(R.id.food8);
+        mFood[8] = findViewById(R.id.food9);
+        mFood[9] = findViewById(R.id.food10);
 
         // Enables Always-on
         setAmbientEnabled();
@@ -67,6 +80,17 @@ public class MainActivity extends WearableActivity
                                 mHearts[i].setImageResource(R.mipmap.half);
                             else
                                 mHearts[i].setImageResource(R.mipmap.full);
+                        }
+
+                        double foodValue = Math.ceil(newStatus.getHunger())/2.0f;
+                        for (int i = 0; i<mFood.length; i++)
+                        {
+                            if (i >= foodValue)
+                                mFood[i].setImageResource(R.mipmap.food_empty);
+                            else if (i < foodValue && (i+1) > foodValue)
+                                mFood[i].setImageResource(R.mipmap.food_half);
+                            else
+                                mFood[i].setImageResource(R.mipmap.food_full);
                         }
 
                     }
