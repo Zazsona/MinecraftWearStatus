@@ -54,4 +54,59 @@ public class PlayerStatusMessage extends Message
     {
         return maxHealth;
     }
+
+    /**
+     * Sets the value of health
+     *
+     * @param health the value to set
+     */
+    public void setHealth(float health)
+    {
+        this.health = health;
+    }
+
+    /**
+     * Sets the value of healthChange
+     *
+     * @param healthChange the value to set
+     */
+    public void setHealthChange(float healthChange)
+    {
+        this.healthChange = healthChange;
+    }
+
+    /**
+     * Sets the value of maxHealth
+     *
+     * @param maxHealth the value to set
+     */
+    public void setMaxHealth(float maxHealth)
+    {
+        this.maxHealth = maxHealth;
+    }
+
+    /**
+     * Sets the value of hunger
+     *
+     * @param hunger the value to set
+     */
+    public void setHunger(int hunger)
+    {
+        this.hunger = hunger;
+    }
+
+    @Override
+    public boolean equals(Object o)
+    {
+        if (o instanceof PlayerStatusMessage)
+        {
+            PlayerStatusMessage compareMessage = (PlayerStatusMessage) o;
+            return
+                    compareMessage.health == health
+                    && compareMessage.healthChange == healthChange
+                    && compareMessage.maxHealth == maxHealth
+                    && compareMessage.hunger == hunger;
+        }
+        return false;
+    }
 }

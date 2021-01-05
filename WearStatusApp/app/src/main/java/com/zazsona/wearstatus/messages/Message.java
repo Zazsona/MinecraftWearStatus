@@ -4,7 +4,7 @@ public class Message
 {
     private final String messageType;
 
-    protected Message(String messageType)
+    public Message(String messageType)
     {
         this.messageType = messageType;
     }

@@ -2,16 +2,19 @@ package com.zazsona.wearstatus;
 
 import com.zazsona.wearstatus.messages.PlayerStatusMessage;
 import com.zazsona.wearstatus.client.WearConnector;
+import com.zazsona.wearstatus.messages.WorldStatusMessage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.world.DimensionType;
+import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.living.*;
 import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.EventBus;
-import net.minecraftforge.eventbus.api.Event;
+import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
@@ -23,28 +26,21 @@ import org.apache.logging.log4j.Logger;
 @Mod("wearstatus")
 public class WearStatusMod
 {
-    // Directly reference a log4j logger.
     private static final Logger LOGGER = LogManager.getLogger();
     private PlayerStatusMessage lastPlayerStatus;
+    private WorldStatusMessage lastWorldStatus;
 
     public WearStatusMod()
     {
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::initialiseMod);
-        // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
     }
 
     @SubscribeEvent
     public void initialiseMod(final FMLClientSetupEvent event)
     {
-        // do something that can only be done on the client
-        LOGGER.info("Got game settings {}", event.getMinecraftSupplier().get().gameSettings);
+        MinecraftForge.EVENT_BUS.addListener(this::sendPlayerUpdate);
         new Thread(() -> WearConnector.getInstance().startServer()).start();
-        MinecraftForge.EVENT_BUS.addListener(this::registerDamage);
-        MinecraftForge.EVENT_BUS.addListener(this::registerHeal);
-        MinecraftForge.EVENT_BUS.addListener(this::registerSpawn);
-        MinecraftForge.EVENT_BUS.addListener(this::registerEat);
-        MinecraftForge.EVENT_BUS.addListener(this::registerHunger);
     }
 
     private boolean isLocalPlayer(Entity entity)
@@ -63,64 +59,14 @@ public class WearStatusMod
     }
 
     @SubscribeEvent
-    public void registerDamage(final LivingDamageEvent event)
+    public void sendPlayerUpdate(final TickEvent.PlayerTickEvent event)
     {
-        if (isLocalPlayer(event.getEntity()))
+        if (event.player != null && isLocalPlayer(event.player))
         {
-            PlayerEntity playerEntity = (PlayerEntity) event.getEntity();
-            float currentHealth = Math.min(Math.max(0.0f, playerEntity.getHealth()-event.getAmount()), playerEntity.getMaxHealth()); //Clamp between 0 and MaxHealth
-            PlayerStatusMessage playerStatusMessage = new PlayerStatusMessage(currentHealth, -event.getAmount(), playerEntity.getMaxHealth(), playerEntity.getFoodStats().getFoodLevel());
-            WearConnector.getInstance().sendMessage(playerStatusMessage);
-            this.lastPlayerStatus = playerStatusMessage;
-        }
-
-    }
-
-    @SubscribeEvent
-    public void registerHeal(final LivingHealEvent event)
-    {
-        if (isLocalPlayer(event.getEntity()))
-        {
-            PlayerEntity playerEntity = (PlayerEntity) event.getEntity();
-            float currentHealth = Math.min(Math.max(0.0f, playerEntity.getHealth()+event.getAmount()), playerEntity.getMaxHealth()); //Clamp between 0 and MaxHealth
-            PlayerStatusMessage playerStatusMessage = new PlayerStatusMessage(currentHealth, event.getAmount(), playerEntity.getMaxHealth(), playerEntity.getFoodStats().getFoodLevel());
-            WearConnector.getInstance().sendMessage(playerStatusMessage);
-            this.lastPlayerStatus = playerStatusMessage;
-        }
-    }
-
-    @SubscribeEvent
-    public void registerSpawn(final PlayerEvent.PlayerRespawnEvent event)
-    {
-        if (isLocalPlayer(event.getEntity()))
-        {
-            PlayerStatusMessage playerStatusMessage = new PlayerStatusMessage(20.0f, 20.0f, 20.0f, 20);
-            WearConnector.getInstance().sendMessage(playerStatusMessage);
-            this.lastPlayerStatus = playerStatusMessage;
-        }
-    }
-
-    @SubscribeEvent
-    public void registerEat(final LivingEntityUseItemEvent.Finish event)
-    {
-        if (isLocalPlayer(event.getEntity()))
-        {
-            PlayerEntity playerEntity = (PlayerEntity) event.getEntity();
-            PlayerStatusMessage playerStatusMessage = new PlayerStatusMessage(playerEntity.getHealth(), 0.0f, playerEntity.getMaxHealth(), playerEntity.getFoodStats().getFoodLevel());
-            WearConnector.getInstance().sendMessage(playerStatusMessage);
-            this.lastPlayerStatus = playerStatusMessage;
-        }
-    }
-
-    @SubscribeEvent
-    public void registerHunger(final TickEvent.PlayerTickEvent event)
-    {
-        if (isLocalPlayer(event.player))
-        {
-            int newFoodLevel = event.player.getFoodStats().getFoodLevel();
-            if (lastPlayerStatus == null || newFoodLevel != lastPlayerStatus.getHunger())
+            //In the event of any health changes, this does mean the message will be sent twice (b/c health change will be 0 on the next tick). It's lightweight, so not too bad, but worth being aware of.
+            PlayerStatusMessage playerStatusMessage = new PlayerStatusMessage(event.player.getHealth(), lastPlayerStatus.getHealth()-event.player.getHealth(), event.player.getMaxHealth(), event.player.getFoodStats().getFoodLevel());
+            if (lastPlayerStatus == null || !lastPlayerStatus.equals(playerStatusMessage))
             {
-                PlayerStatusMessage playerStatusMessage = new PlayerStatusMessage(event.player.getHealth(), 0.0f, event.player.getMaxHealth(), event.player.getFoodStats().getFoodLevel());
                 WearConnector.getInstance().sendMessage(playerStatusMessage);
                 this.lastPlayerStatus = playerStatusMessage;
             }
