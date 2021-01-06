@@ -6,7 +6,6 @@ import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.support.wearable.activity.WearableActivity;
 import android.widget.ImageView;
-import android.widget.TextView;
 
 import com.zazsona.wearstatus.listeners.PlayerStatusUpdateListener;
 import com.zazsona.wearstatus.listeners.WorldStatusUpdateListener;
@@ -101,11 +100,26 @@ public class MainActivity extends WearableActivity
         WearConnector.getInstance().AddListener(new WorldStatusUpdateListener()
         {
             @Override
-            public void onWorldStatusUpdated(WorldStatusMessage newStatus)
+            public void onWorldStatusUpdated(final WorldStatusMessage newStatus)
             {
-                float dayFraction = newStatus.getWorldTime()/24000.0f;
-                int rotation = Math.round(360.0f*dayFraction);
-                mSky.setRotation(rotation);
+                activityContext.runOnUiThread(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        String worldType = newStatus.getWorldType().toUpperCase();
+                        if (worldType.contains("OVERWORLD"))
+                            mSky.setImageResource(R.mipmap.sky);
+                        else if (worldType.contains("THE_NETHER"))
+                            mSky.setImageResource(R.mipmap.nether);
+                        else if (worldType.contains("THE_END"))
+                            mSky.setImageResource(R.mipmap.end);
+
+                        float dayFraction = newStatus.getWorldTime()/24000.0f;
+                        float rotation = (360.0f*dayFraction);
+                        mSky.setRotation(rotation);
+                    }
+                });
             }
         });
     }

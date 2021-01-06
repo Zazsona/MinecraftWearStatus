@@ -90,7 +90,7 @@ public class WearStatusMod
             World world = player.getEntityWorld();
             if (world != null)
             {
-                WorldStatusMessage worldStatusMessage = new WorldStatusMessage(world.getDimensionType().toString(), world.getDayTime());
+                WorldStatusMessage worldStatusMessage = new WorldStatusMessage(world.getDimensionKey().getLocation().getPath(), world.getDayTime());
                 if (lastWorldStatus == null || !lastWorldStatus.equals(worldStatusMessage))
                 {
                     WearConnector.getInstance().sendMessage(worldStatusMessage);
