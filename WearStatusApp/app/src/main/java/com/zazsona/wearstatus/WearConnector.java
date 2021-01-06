@@ -8,8 +8,10 @@ import android.net.NetworkRequest;
 
 import com.google.gson.Gson;
 import com.zazsona.wearstatus.listeners.PlayerStatusUpdateListener;
+import com.zazsona.wearstatus.listeners.WorldStatusUpdateListener;
 import com.zazsona.wearstatus.messages.Message;
 import com.zazsona.wearstatus.messages.PlayerStatusMessage;
+import com.zazsona.wearstatus.messages.WorldStatusMessage;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -28,6 +30,7 @@ public class WearConnector
     private ObjectOutputStream outputStream;
     private boolean manuallyStopped;
     private ArrayList<PlayerStatusUpdateListener> playerStatusListeners = new ArrayList<>();
+    private ArrayList<WorldStatusUpdateListener> worldStatusListeners = new ArrayList<>();
 
     public static WearConnector getInstance()
     {
@@ -99,6 +102,11 @@ public class WearConnector
                     PlayerStatusMessage playerStatus = new Gson().fromJson(json, PlayerStatusMessage.class);
                     RunListeners(playerStatus);
                 }
+                else if (message.getMessageType().equals(WorldStatusMessage.MESSAGE_TYPE))
+                {
+                    WorldStatusMessage worldStatus = new Gson().fromJson(json, WorldStatusMessage.class);
+                    RunListeners(worldStatus);
+                }
                 else if (message.getMessageType().equals("PING"))
                 {
                     //Do nothing.
@@ -142,5 +150,16 @@ public class WearConnector
     {
         for (PlayerStatusUpdateListener handler : playerStatusListeners)
             handler.onPlayerStatusUpdated(playerStatus);
+    }
+
+    public void AddListener(WorldStatusUpdateListener handler)
+    {
+        worldStatusListeners.add(handler);
+    }
+
+    private void RunListeners(WorldStatusMessage worldStatus)
+    {
+        for (WorldStatusUpdateListener handler : worldStatusListeners)
+            handler.onWorldStatusUpdated(worldStatus);
     }
 }

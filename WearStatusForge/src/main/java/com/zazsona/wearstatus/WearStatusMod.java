@@ -7,14 +7,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.world.DimensionType;
 import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
-import net.minecraftforge.event.entity.living.*;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
@@ -40,7 +36,9 @@ public class WearStatusMod
     public void initialiseMod(final FMLClientSetupEvent event)
     {
         MinecraftForge.EVENT_BUS.addListener(this::sendPlayerUpdate);
+        MinecraftForge.EVENT_BUS.addListener(this::sendWorldChangeUpdate);
         new Thread(() -> WearConnector.getInstance().startServer()).start();
+        new Thread(() -> runWorldTimeLoop()).start();
     }
 
     private boolean isLocalPlayer(Entity entity)
@@ -64,12 +62,58 @@ public class WearStatusMod
         if (event.player != null && isLocalPlayer(event.player))
         {
             //In the event of any health changes, this does mean the message will be sent twice (b/c health change will be 0 on the next tick). It's lightweight, so not too bad, but worth being aware of.
-            PlayerStatusMessage playerStatusMessage = new PlayerStatusMessage(event.player.getHealth(), lastPlayerStatus.getHealth()-event.player.getHealth(), event.player.getMaxHealth(), event.player.getFoodStats().getFoodLevel());
+            float healthChange = (lastPlayerStatus == null) ? 0 : event.player.getHealth()-lastPlayerStatus.getHealth();
+            PlayerStatusMessage playerStatusMessage = new PlayerStatusMessage(event.player.getHealth(), healthChange, event.player.getMaxHealth(), event.player.getFoodStats().getFoodLevel());
             if (lastPlayerStatus == null || !lastPlayerStatus.equals(playerStatusMessage))
             {
                 WearConnector.getInstance().sendMessage(playerStatusMessage);
                 this.lastPlayerStatus = playerStatusMessage;
             }
+        }
+    }
+
+
+    @SubscribeEvent
+    public void sendWorldChangeUpdate(final EntityJoinWorldEvent event)
+    {
+        if (isLocalPlayer(event.getEntity()))
+        {
+            sendWorldUpdate();
+        }
+    }
+
+    public void sendWorldUpdate()
+    {
+        PlayerEntity player = Minecraft.getInstance().player;
+        if (player != null)
+        {
+            World world = player.getEntityWorld();
+            if (world != null)
+            {
+                WorldStatusMessage worldStatusMessage = new WorldStatusMessage(world.getDimensionType().toString(), world.getDayTime());
+                if (lastWorldStatus == null || !lastWorldStatus.equals(worldStatusMessage))
+                {
+                    WearConnector.getInstance().sendMessage(worldStatusMessage);
+                    this.lastWorldStatus = worldStatusMessage;
+                }
+            }
+        }
+    }
+
+    private void runWorldTimeLoop()
+    {
+        try
+        {
+            while (true)
+            {
+                Thread.sleep(1000);
+                sendWorldUpdate();
+            }
+        }
+        catch (InterruptedException e)
+        {
+            LOGGER.info("World update thread stopped.");
+            e.printStackTrace();
         }
     }
 }

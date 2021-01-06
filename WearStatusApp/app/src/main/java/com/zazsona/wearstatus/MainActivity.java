@@ -9,14 +9,15 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.zazsona.wearstatus.listeners.PlayerStatusUpdateListener;
+import com.zazsona.wearstatus.listeners.WorldStatusUpdateListener;
 import com.zazsona.wearstatus.messages.PlayerStatusMessage;
+import com.zazsona.wearstatus.messages.WorldStatusMessage;
 
 public class MainActivity extends WearableActivity
 {
-
-    private TextView mTextView;
     private ImageView mHearts[];
     private ImageView mFood[];
+    private ImageView mSky;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -25,7 +26,8 @@ public class MainActivity extends WearableActivity
         setContentView(R.layout.activity_main);
 
         final MainActivity activityContext = this;
-        mTextView = (TextView) findViewById(R.id.healthText);
+
+        mSky = findViewById(R.id.skyWheel);
 
         mHearts = new ImageView[10];
         mHearts[0] = findViewById(R.id.heart1);
@@ -63,7 +65,6 @@ public class MainActivity extends WearableActivity
                     @Override
                     public void run()
                     {
-                        mTextView.setText(String.valueOf(Math.ceil(newStatus.getHealth())));
                         if (newStatus.getHealthChange() < 0)
                         {
                             Vibrator v = (Vibrator) getSystemService(activityContext.getApplicationContext().VIBRATOR_SERVICE);
@@ -92,9 +93,19 @@ public class MainActivity extends WearableActivity
                             else
                                 mFood[i].setImageResource(R.mipmap.food_full);
                         }
-
                     }
                 });
+            }
+        });
+
+        WearConnector.getInstance().AddListener(new WorldStatusUpdateListener()
+        {
+            @Override
+            public void onWorldStatusUpdated(WorldStatusMessage newStatus)
+            {
+                float dayFraction = newStatus.getWorldTime()/24000.0f;
+                int rotation = Math.round(360.0f*dayFraction);
+                mSky.setRotation(rotation);
             }
         });
     }
