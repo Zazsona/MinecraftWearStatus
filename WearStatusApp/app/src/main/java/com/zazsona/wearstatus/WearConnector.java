@@ -7,6 +7,7 @@ import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
 
 import com.google.gson.Gson;
+import com.zazsona.wearstatus.listeners.GameConnectedListener;
 import com.zazsona.wearstatus.listeners.PlayerStatusUpdateListener;
 import com.zazsona.wearstatus.listeners.WorldStatusUpdateListener;
 import com.zazsona.wearstatus.messages.Message;
@@ -46,13 +47,18 @@ public class WearConnector
         //Required private constructor
     }
 
-    public void startConnection(InetAddress address)
+    public void startConnection(InetAddress address, GameConnectedListener connectedListener)
     {
         this.address = address;
-        initialiseSocket();
+        initialiseSocket(connectedListener);
     }
 
-    private void initialiseSocket()
+    public void startConnection(InetAddress address)
+    {
+        startConnection(address, null);
+    }
+
+    private void initialiseSocket(GameConnectedListener connectedListener)
     {
         try
         {
@@ -64,6 +70,8 @@ public class WearConnector
             outputStream = new ObjectOutputStream(socket.getOutputStream());
             outputStream.flush();
             inputStream = new ObjectInputStream(socket.getInputStream());
+            if (connectedListener != null)
+                connectedListener.onGameConnected(socket.getInetAddress());
             listenForMessages();
         }
         catch (SocketException e)
@@ -108,7 +116,7 @@ public class WearConnector
             System.out.println("Lost connection to the server - "+e.getMessage());
             e.printStackTrace();
             if (!manuallyStopped)
-                initialiseSocket();
+                initialiseSocket(null);
         }
     }
 
@@ -118,10 +126,10 @@ public class WearConnector
         {
             if (socket != null && !socket.isClosed())
             {
+                manuallyStopped = true;
                 outputStream.flush();
                 socket.close();
             }
-            manuallyStopped = true;
             System.out.println("Wear Client was stopped.");
         }
         catch (IOException e)

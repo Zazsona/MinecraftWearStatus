@@ -9,8 +9,12 @@ import android.os.Bundle;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.support.wearable.activity.WearableActivity;
+import android.view.View;
 import android.widget.ImageView;
 
+import androidx.constraintlayout.widget.ConstraintLayout;
+
+import com.zazsona.wearstatus.listeners.GameConnectedListener;
 import com.zazsona.wearstatus.listeners.PlayerStatusUpdateListener;
 import com.zazsona.wearstatus.listeners.WorldStatusUpdateListener;
 import com.zazsona.wearstatus.messages.PlayerStatusMessage;
@@ -23,6 +27,9 @@ public class MainActivity extends WearableActivity
     private ImageView mHearts[];
     private ImageView mFood[];
     private ImageView mSky;
+    private ConstraintLayout mSearchView;
+
+    private boolean stopped = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -33,6 +40,7 @@ public class MainActivity extends WearableActivity
         final MainActivity activityContext = this;
 
         mSky = findViewById(R.id.skyWheel);
+        mSearchView = findViewById(R.id.searchView);
 
         mHearts = new ImageView[10];
         mHearts[0] = findViewById(R.id.heart1);
@@ -58,8 +66,6 @@ public class MainActivity extends WearableActivity
         mFood[8] = findViewById(R.id.food9);
         mFood[9] = findViewById(R.id.food10);
 
-        // Enables Always-on
-        setAmbientEnabled();
         WearConnector.getInstance().AddListener(new PlayerStatusUpdateListener()
         {
             @Override
@@ -134,6 +140,7 @@ public class MainActivity extends WearableActivity
     protected void onStart()
     {
         super.onStart();
+        mSearchView.setVisibility(View.VISIBLE);
         final ConnectivityManager connectivityManager = (ConnectivityManager) getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkRequest request = new NetworkRequest.Builder()
                 .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
@@ -147,11 +154,17 @@ public class MainActivity extends WearableActivity
                 connectivityManager.bindProcessToNetwork(network);
 
                 InetAddress address = null;
-                while (address == null)
+                while (address == null && !stopped)
+                {
                     address = WearBroadcaster.getInstance().sendBroadcastSearch();
-                final InetAddress finalAddress = address;
-                new Thread(() -> WearConnector.getInstance().startConnection(finalAddress)).start();
+                    System.out.println("B");
+                }
 
+                if (address != null && !stopped)        //Messy
+                {
+                    final InetAddress finalAddress = address;
+                    new Thread(() -> WearConnector.getInstance().startConnection(finalAddress, gameAddress -> runOnUiThread(() -> mSearchView.setVisibility(View.INVISIBLE)))).start();
+                }
             }
         };
         connectivityManager.requestNetwork(request, networkCallback);
@@ -161,6 +174,8 @@ public class MainActivity extends WearableActivity
     protected void onStop()
     {
         super.onStop();
+        stopped = true;
+        mSearchView.setVisibility(View.VISIBLE);
         new Thread(() ->
                    {
                        WearConnector.getInstance().stopConnection();
