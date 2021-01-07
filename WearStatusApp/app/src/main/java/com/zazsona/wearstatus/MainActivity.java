@@ -140,6 +140,7 @@ public class MainActivity extends WearableActivity
     protected void onStart()
     {
         super.onStart();
+        stopped = false;
         mSearchView.setVisibility(View.VISIBLE);
         final ConnectivityManager connectivityManager = (ConnectivityManager) getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkRequest request = new NetworkRequest.Builder()
@@ -156,14 +157,18 @@ public class MainActivity extends WearableActivity
                 InetAddress address = null;
                 while (address == null && !stopped)
                 {
+                    System.out.println("Broadcasting...");
                     address = WearBroadcaster.getInstance().sendBroadcastSearch();
-                    System.out.println("B");
                 }
 
                 if (address != null && !stopped)        //Messy
                 {
                     final InetAddress finalAddress = address;
-                    new Thread(() -> WearConnector.getInstance().startConnection(finalAddress, gameAddress -> runOnUiThread(() -> mSearchView.setVisibility(View.INVISIBLE)))).start();
+                    new Thread(() -> WearConnector.getInstance().startConnection(finalAddress, gameAddress -> runOnUiThread(() -> mSearchView.setVisibility(View.INVISIBLE)), gameAddress ->
+                    {
+                        runOnUiThread(() -> mSearchView.setVisibility(View.VISIBLE));
+                        onStart();
+                    })).start();
                 }
             }
         };

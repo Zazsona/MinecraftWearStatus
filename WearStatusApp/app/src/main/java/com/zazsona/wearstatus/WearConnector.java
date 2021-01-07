@@ -8,6 +8,7 @@ import android.net.NetworkRequest;
 
 import com.google.gson.Gson;
 import com.zazsona.wearstatus.listeners.GameConnectedListener;
+import com.zazsona.wearstatus.listeners.GameConnectionLostListener;
 import com.zazsona.wearstatus.listeners.PlayerStatusUpdateListener;
 import com.zazsona.wearstatus.listeners.WorldStatusUpdateListener;
 import com.zazsona.wearstatus.messages.Message;
@@ -47,18 +48,18 @@ public class WearConnector
         //Required private constructor
     }
 
-    public void startConnection(InetAddress address, GameConnectedListener connectedListener)
+    public void startConnection(InetAddress address, GameConnectedListener connectedListener, GameConnectionLostListener connectionLostListener)
     {
         this.address = address;
-        initialiseSocket(connectedListener);
+        initialiseSocket(connectedListener, connectionLostListener);
     }
 
     public void startConnection(InetAddress address)
     {
-        startConnection(address, null);
+        startConnection(address, null, null);
     }
 
-    private void initialiseSocket(GameConnectedListener connectedListener)
+    private void initialiseSocket(GameConnectedListener connectedListener, GameConnectionLostListener connectionLostListener)
     {
         try
         {
@@ -73,6 +74,11 @@ public class WearConnector
             if (connectedListener != null)
                 connectedListener.onGameConnected(socket.getInetAddress());
             listenForMessages();
+            if (connectionLostListener != null)
+                connectionLostListener.onGameConnectionLost(address);
+            if (!manuallyStopped)
+                initialiseSocket(connectedListener, connectionLostListener);
+
         }
         catch (SocketException e)
         {
@@ -115,8 +121,6 @@ public class WearConnector
         {
             System.out.println("Lost connection to the server - "+e.getMessage());
             e.printStackTrace();
-            if (!manuallyStopped)
-                initialiseSocket(null);
         }
     }
 
