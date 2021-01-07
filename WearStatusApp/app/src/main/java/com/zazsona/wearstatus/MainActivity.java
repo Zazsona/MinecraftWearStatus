@@ -1,6 +1,10 @@
 package com.zazsona.wearstatus;
 
 import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
+import android.net.NetworkRequest;
 import android.os.Bundle;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
@@ -11,6 +15,8 @@ import com.zazsona.wearstatus.listeners.PlayerStatusUpdateListener;
 import com.zazsona.wearstatus.listeners.WorldStatusUpdateListener;
 import com.zazsona.wearstatus.messages.PlayerStatusMessage;
 import com.zazsona.wearstatus.messages.WorldStatusMessage;
+
+import java.net.InetAddress;
 
 public class MainActivity extends WearableActivity
 {
@@ -128,28 +134,37 @@ public class MainActivity extends WearableActivity
     protected void onStart()
     {
         super.onStart();
-        final Context context = this.getApplicationContext();
-        new Thread(new Runnable()
+        final ConnectivityManager connectivityManager = (ConnectivityManager) getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkRequest request = new NetworkRequest.Builder()
+                .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
+                .build();
+
+        ConnectivityManager.NetworkCallback networkCallback = new ConnectivityManager.NetworkCallback()
         {
             @Override
-            public void run()
+            public void onAvailable(Network network)
             {
-                WearConnector.getInstance().startConnection(context);
+                connectivityManager.bindProcessToNetwork(network);
+
+                InetAddress address = null;
+                while (address == null)
+                    address = WearBroadcaster.getInstance().sendBroadcastSearch();
+                final InetAddress finalAddress = address;
+                new Thread(() -> WearConnector.getInstance().startConnection(finalAddress)).start();
+
             }
-        }).start();
+        };
+        connectivityManager.requestNetwork(request, networkCallback);
     }
 
     @Override
     protected void onStop()
     {
         super.onStop();
-        new Thread(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                WearConnector.getInstance().stopConnection();
-            }
-        }).start();
+        new Thread(() ->
+                   {
+                       WearConnector.getInstance().stopConnection();
+                       WearBroadcaster.getInstance().stopBroadcastSearch();
+                   }).start();
     }
 }

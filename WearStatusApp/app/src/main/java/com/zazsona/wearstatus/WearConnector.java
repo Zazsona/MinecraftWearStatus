@@ -16,6 +16,7 @@ import com.zazsona.wearstatus.messages.WorldStatusMessage;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.ArrayList;
@@ -25,6 +26,7 @@ public class WearConnector
     public final int PORT = 25500;
 
     private static WearConnector instance;
+    private InetAddress address;
     private Socket socket;
     private ObjectInputStream inputStream;
     private ObjectOutputStream outputStream;
@@ -44,22 +46,10 @@ public class WearConnector
         //Required private constructor
     }
 
-    public void startConnection(Context context)
+    public void startConnection(InetAddress address)
     {
-        final ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkRequest request = new NetworkRequest.Builder()
-                .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
-                .build();
-        ConnectivityManager.NetworkCallback networkCallback = new ConnectivityManager.NetworkCallback()
-        {
-            @Override
-            public void onAvailable(Network network)
-            {
-                connectivityManager.bindProcessToNetwork(network);
-                initialiseSocket();
-            }
-        };
-        connectivityManager.requestNetwork(request, networkCallback);
+        this.address = address;
+        initialiseSocket();
     }
 
     private void initialiseSocket()
@@ -69,7 +59,7 @@ public class WearConnector
             stopConnection();
             manuallyStopped = false;
             System.out.println("Starting connection...");
-            socket = new Socket("192.168.1.254", PORT);
+            socket = new Socket(address, PORT);
             System.out.println("Connected!");
             outputStream = new ObjectOutputStream(socket.getOutputStream());
             outputStream.flush();

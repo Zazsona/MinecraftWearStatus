@@ -1,5 +1,6 @@
 package com.zazsona.wearstatus;
 
+import com.zazsona.wearstatus.client.WearBroadcastListener;
 import com.zazsona.wearstatus.messages.PlayerStatusMessage;
 import com.zazsona.wearstatus.client.WearConnector;
 import com.zazsona.wearstatus.messages.WorldStatusMessage;
@@ -38,6 +39,7 @@ public class WearStatusMod
         MinecraftForge.EVENT_BUS.addListener(this::sendPlayerUpdate);
         MinecraftForge.EVENT_BUS.addListener(this::sendWorldChangeUpdate);
         new Thread(() -> WearConnector.getInstance().startServer()).start();
+        new Thread(() -> WearBroadcastListener.getInstance().startListener()).start();
         new Thread(() -> runWorldTimeLoop()).start();
     }
 
