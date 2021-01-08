@@ -68,7 +68,7 @@ public class WearStatusMod
             PlayerStatusMessage playerStatusMessage = new PlayerStatusMessage(event.player.getHealth(), healthChange, event.player.getMaxHealth(), event.player.getFoodStats().getFoodLevel());
             if (lastPlayerStatus == null || !lastPlayerStatus.equals(playerStatusMessage))
             {
-                WearConnector.getInstance().sendMessage(playerStatusMessage);
+                WearConnector.getInstance().queueMessage(playerStatusMessage);
                 this.lastPlayerStatus = playerStatusMessage;
             }
         }
@@ -95,7 +95,7 @@ public class WearStatusMod
                 WorldStatusMessage worldStatusMessage = new WorldStatusMessage(world.getDimensionKey().getLocation().getPath(), world.getDayTime());
                 if (lastWorldStatus == null || !lastWorldStatus.equals(worldStatusMessage))
                 {
-                    WearConnector.getInstance().sendMessage(worldStatusMessage);
+                    WearConnector.getInstance().queueMessage(worldStatusMessage);
                     this.lastWorldStatus = worldStatusMessage;
                 }
             }

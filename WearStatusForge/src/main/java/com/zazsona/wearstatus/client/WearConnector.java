@@ -14,11 +14,16 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.time.Instant;
+import java.util.LinkedList;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class WearConnector
 {
     private static final Logger LOGGER = LogManager.getLogger();
     public final int PORT = 25500;
+    public final int PING_FREQUENCY_MS = 1500;
 
     private static WearConnector instance;
     private ServerSocket serverSocket;
@@ -26,6 +31,7 @@ public class WearConnector
     private ObjectInputStream inputStream;
     private ObjectOutputStream outputStream;
     private Object lock = new Object();
+    private BlockingQueue<Message> messageQueue;
 
     public static WearConnector getInstance()
     {
@@ -39,6 +45,7 @@ public class WearConnector
         try
         {
             LOGGER.info("Creating wear server...");
+            messageQueue = new LinkedBlockingQueue<>();
             serverSocket = new ServerSocket(PORT);
             serverSocket.setSoTimeout(0);
             LOGGER.info("Wear server created: "+serverSocket.getInetAddress()+":"+serverSocket.getLocalPort());
@@ -67,7 +74,7 @@ public class WearConnector
                 if (clientPlayerEntity != null)
                     sendMessage(new PlayerStatusMessage(clientPlayerEntity.getHealth(), 0.0f, clientPlayerEntity.getMaxHealth(), clientPlayerEntity.getFoodStats().getFoodLevel()));
 
-                runPingLoop(); //This will hold the thread until a ping fails.
+                runQueuedMessageSender(); //This will hold the thread until a ping fails.
                 stopConnection();
             }
         }
@@ -93,6 +100,7 @@ public class WearConnector
                     clientSocket.close();
                 clientSocket = null;
             }
+            messageQueue.clear();
             LOGGER.info("Wear Connection was stopped.");
         }
         catch (IOException e)
@@ -102,7 +110,12 @@ public class WearConnector
         }
     }
 
-    public boolean sendMessage(Message message)
+    public void queueMessage(Message message)
+    {
+        messageQueue.add(message);
+    }
+
+    private boolean sendMessage(Message message)
     {
         try
         {
@@ -126,15 +139,25 @@ public class WearConnector
         }
     }
 
-    private void runPingLoop()
+    private void runQueuedMessageSender()
     {
         try
         {
+            long lastMessageSentTime = Instant.now().toEpochMilli();
             boolean success = true;
             while (success)
             {
-                Thread.sleep(1500);
-                success = sendMessage(new Message("PING"));
+                if (!messageQueue.isEmpty())
+                {
+                    success = sendMessage(messageQueue.take());
+                    lastMessageSentTime = Instant.now().toEpochMilli();
+                }
+                else if (Instant.now().toEpochMilli()-lastMessageSentTime >= PING_FREQUENCY_MS)
+                {
+                    success = sendMessage(new Message("PING"));
+                    lastMessageSentTime = Instant.now().toEpochMilli();
+                }
+                Thread.sleep(16); //Check 60 times a second.
             }
         }
         catch (InterruptedException e)
