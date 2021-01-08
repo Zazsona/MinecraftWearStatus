@@ -1,4 +1,4 @@
-package com.zazsona.wearstatus;
+package com.zazsona.wearstatus.model;
 
 import java.io.IOException;
 import java.net.*;
@@ -77,7 +77,8 @@ public class WearBroadcaster
 
     public void stopBroadcastSearch()
     {
-        socket.close();
+        if (socket != null)
+            socket.close();
     }
 
 }

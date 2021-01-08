@@ -1,4 +1,4 @@
-package com.zazsona.wearstatus.messages;
+package com.zazsona.wearstatus.model.messages;
 
 public class Message
 {

@@ -1,19 +1,13 @@
-package com.zazsona.wearstatus;
-
-import android.content.Context;
-import android.net.ConnectivityManager;
-import android.net.Network;
-import android.net.NetworkCapabilities;
-import android.net.NetworkRequest;
+package com.zazsona.wearstatus.model;
 
 import com.google.gson.Gson;
-import com.zazsona.wearstatus.listeners.GameConnectedListener;
-import com.zazsona.wearstatus.listeners.GameConnectionLostListener;
-import com.zazsona.wearstatus.listeners.PlayerStatusUpdateListener;
-import com.zazsona.wearstatus.listeners.WorldStatusUpdateListener;
-import com.zazsona.wearstatus.messages.Message;
-import com.zazsona.wearstatus.messages.PlayerStatusMessage;
-import com.zazsona.wearstatus.messages.WorldStatusMessage;
+import com.zazsona.wearstatus.model.listeners.GameConnectedListener;
+import com.zazsona.wearstatus.model.listeners.GameConnectionLostListener;
+import com.zazsona.wearstatus.model.listeners.PlayerStatusUpdateListener;
+import com.zazsona.wearstatus.model.listeners.WorldStatusUpdateListener;
+import com.zazsona.wearstatus.model.messages.Message;
+import com.zazsona.wearstatus.model.messages.PlayerStatusMessage;
+import com.zazsona.wearstatus.model.messages.WorldStatusMessage;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
