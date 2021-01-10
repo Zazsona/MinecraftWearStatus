@@ -4,6 +4,7 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -19,6 +20,7 @@ import com.zazsona.wearstatus.viewmodel.MainViewModel;
 
 public class ProfileFragment extends Fragment
 {
+    private ConstraintLayout mProfileRoot;
     private ImageView mHearts[];
     private ImageView mFood[];
     private ImageView mSky;
@@ -47,6 +49,7 @@ public class ProfileFragment extends Fragment
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState)
     {
         super.onViewCreated(view, savedInstanceState);
+        mProfileRoot = view.findViewById(R.id.profileLayout);
         mSky = view.findViewById(R.id.skyWheel);
         mHearts = new ImageView[10];
         mHearts[0] = view.findViewById(R.id.heart1);
@@ -120,6 +123,11 @@ public class ProfileFragment extends Fragment
             float dayFraction = newStatus.getWorldTime()/24000.0f;
             float rotation = (360.0f*dayFraction);
             mSky.setRotation(rotation);
+        });
+
+        viewModel.getSettings().observe(this, newSettings ->
+        {
+            mProfileRoot.setRotation(newSettings.getRotation());
         });
 
     }

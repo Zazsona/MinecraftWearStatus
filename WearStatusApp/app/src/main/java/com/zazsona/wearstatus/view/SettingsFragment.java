@@ -5,6 +5,7 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,11 +14,14 @@ import android.widget.ImageView;
 import android.widget.SeekBar;
 
 import com.zazsona.wearstatus.R;
+import com.zazsona.wearstatus.viewmodel.MainViewModel;
 
 public class SettingsFragment extends Fragment
 {
     private ImageView mRotationView;
     private SeekBar mRotationBar;
+
+    private MainViewModel viewModel;
 
     public SettingsFragment()
     {
@@ -27,6 +31,7 @@ public class SettingsFragment extends Fragment
     @Override
     public void onCreate(Bundle savedInstanceState)
     {
+        viewModel = new ViewModelProvider(this, new ViewModelProvider.AndroidViewModelFactory(getActivity().getApplication())).get(MainViewModel.class);
         super.onCreate(savedInstanceState);
     }
 
@@ -41,6 +46,15 @@ public class SettingsFragment extends Fragment
     {
         mRotationView = view.findViewById(R.id.rotationView);
         mRotationBar = view.findViewById(R.id.rotationBar);
+        float rotation = viewModel.getSettings().getValue().getRotation();
+        if (rotation == 0.0f)
+            mRotationBar.setProgress(0);
+        else if (rotation == 90.0f)
+            mRotationBar.setProgress(1);
+        else if (rotation == 180.0f)
+            mRotationBar.setProgress(2);
+        else if (rotation == 270.0f)
+            mRotationBar.setProgress(3);
 
         mRotationBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener()
         {
@@ -48,21 +62,13 @@ public class SettingsFragment extends Fragment
             public void onProgressChanged(SeekBar seekBar, int i, boolean b)
             {
                 if (i == 0)
-                {
-                    mRotationView.setRotation(0.0f);
-                }
+                    viewModel.getSettings().getValue().setRotation(0.0f);
                 else if (i == 1)
-                {
-                    mRotationView.setRotation(90.0f);
-                }
+                    viewModel.getSettings().getValue().setRotation(90.0f);
                 else if (i == 2)
-                {
-                    mRotationView.setRotation(180.0f);
-                }
+                    viewModel.getSettings().getValue().setRotation(180.0f);
                 else if (i == 3)
-                {
-                    mRotationView.setRotation(270.0f);
-                }
+                    viewModel.getSettings().getValue().setRotation(270.0f);
             }
 
             @Override
@@ -76,6 +82,11 @@ public class SettingsFragment extends Fragment
             {
 
             }
+        });
+
+        viewModel.getSettings().observe(this, newSettings ->
+        {
+            mRotationView.setRotation(newSettings.getRotation());
         });
         super.onViewCreated(view, savedInstanceState);
     }

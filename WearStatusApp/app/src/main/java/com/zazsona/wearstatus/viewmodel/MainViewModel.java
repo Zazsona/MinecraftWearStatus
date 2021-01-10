@@ -7,12 +7,11 @@ import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
 
-import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.ViewModel;
 
+import com.zazsona.wearstatus.model.Settings;
 import com.zazsona.wearstatus.model.WearBroadcaster;
 import com.zazsona.wearstatus.model.WearConnector;
 import com.zazsona.wearstatus.model.listeners.PlayerStatusUpdateListener;
@@ -27,17 +26,21 @@ public class MainViewModel extends AndroidViewModel
     private MutableLiveData<PlayerStatusMessage> playerStatus;
     private MutableLiveData<WorldStatusMessage> worldStatus;
     private MutableLiveData<Boolean> isConnected;
+    private MutableLiveData<Settings> settings;
     private boolean isConnectionStopped;
 
     public MainViewModel(Application application)
     {
         super(application);
-        WearConnector.getInstance().AddListener((PlayerStatusUpdateListener) newStatus -> playerStatus.postValue(newStatus));
-        WearConnector.getInstance().AddListener((WorldStatusUpdateListener) newStatus -> worldStatus.postValue(newStatus));
+        WearConnector.getInstance().addListener((PlayerStatusUpdateListener) newStatus -> playerStatus.postValue(newStatus));
+        WearConnector.getInstance().addListener((WorldStatusUpdateListener) newStatus -> worldStatus.postValue(newStatus));
+        Settings.get(getApplication().getApplicationContext()).addListener(newSettings -> settings.postValue(newSettings));
         playerStatus = new MutableLiveData<>();
         worldStatus = new MutableLiveData<>();
         isConnected = new MutableLiveData<>();
         isConnected.setValue(false);
+        settings = new MutableLiveData<>();
+        settings.setValue(Settings.get(getApplication().getApplicationContext()));
     }
 
     public LiveData<PlayerStatusMessage> getPlayerStatus()
@@ -53,6 +56,11 @@ public class MainViewModel extends AndroidViewModel
     public LiveData<Boolean> isConnected()
     {
         return isConnected;
+    }
+
+    public LiveData<Settings> getSettings()
+    {
+        return settings;
     }
 
     public void stopMinecraftConnection()

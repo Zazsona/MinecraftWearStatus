@@ -98,12 +98,12 @@ public class WearConnector
                 if (message.getMessageType().equals(PlayerStatusMessage.MESSAGE_TYPE))
                 {
                     PlayerStatusMessage playerStatus = new Gson().fromJson(json, PlayerStatusMessage.class);
-                    RunListeners(playerStatus);
+                    runListeners(playerStatus);
                 }
                 else if (message.getMessageType().equals(WorldStatusMessage.MESSAGE_TYPE))
                 {
                     WorldStatusMessage worldStatus = new Gson().fromJson(json, WorldStatusMessage.class);
-                    RunListeners(worldStatus);
+                    runListeners(worldStatus);
                 }
                 else if (message.getMessageType().equals("PING"))
                 {
@@ -137,23 +137,23 @@ public class WearConnector
         }
     }
 
-    public void AddListener(PlayerStatusUpdateListener handler)
+    public void addListener(PlayerStatusUpdateListener handler)
     {
         playerStatusListeners.add(handler);
     }
 
-    private void RunListeners(PlayerStatusMessage playerStatus)
+    private void runListeners(PlayerStatusMessage playerStatus)
     {
         for (PlayerStatusUpdateListener handler : playerStatusListeners)
             handler.onPlayerStatusUpdated(playerStatus);
     }
 
-    public void AddListener(WorldStatusUpdateListener handler)
+    public void addListener(WorldStatusUpdateListener handler)
     {
         worldStatusListeners.add(handler);
     }
 
-    private void RunListeners(WorldStatusMessage worldStatus)
+    private void runListeners(WorldStatusMessage worldStatus)
     {
         for (WorldStatusUpdateListener handler : worldStatusListeners)
             handler.onWorldStatusUpdated(worldStatus);

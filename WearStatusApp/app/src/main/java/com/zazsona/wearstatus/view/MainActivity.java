@@ -28,7 +28,7 @@ public class MainActivity extends AppCompatActivity
         viewModel = new ViewModelProvider(this, new ViewModelProvider.AndroidViewModelFactory(getApplication())).get(MainViewModel.class);
         mFragmentManager = getSupportFragmentManager();
 
-        mDrawerView = (WearableNavigationDrawerView) findViewById(R.id.top_navigation_drawer);
+        mDrawerView = findViewById(R.id.top_navigation_drawer);
         mDrawerView.setAdapter(new TopNavigationAdapter(this));
         mDrawerView.getController().peekDrawer();
         mDrawerView.addOnItemSelectedListener(pos ->
@@ -48,7 +48,6 @@ public class MainActivity extends AppCompatActivity
                                                   if (fragment != null)
                                                       mFragmentManager.beginTransaction().replace(R.id.overlayFragmentLayout, fragment).commit();
                                               });
-
 
         viewModel.isConnected().observe(this, connected ->
         {
