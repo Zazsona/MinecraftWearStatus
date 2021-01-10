@@ -37,9 +37,9 @@ public class TopNavigationAdapter extends WearableNavigationDrawerView.WearableN
         switch (option)
         {
             case PROFILE:
-                return activity.getDrawable(R.drawable.ic_full_sad);
+                return activity.getDrawable(R.drawable.profile_icon);
             case SETTINGS:
-                return activity.getDrawable(R.drawable.ic_cc_settings_button_center);
+                return activity.getDrawable(R.drawable.settings_icon);
             default:
                 return null;
         }
